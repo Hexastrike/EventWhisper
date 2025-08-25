@@ -1,0 +1,40 @@
+ci:
+  autoupdate_schedule: quarterly
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+      - id: ruff-format
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-ast
+
+  - repo: local
+    hooks:
+      # Fast tests on commit
+      - id: pytest
+        name: pytest (quick)
+        entry: poetry run pytest -q
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # Full suite + coverage on push
+      - id: pytest-full
+        name: pytest (full, coverage)
+        entry: poetry run pytest --maxfail=1 --disable-warnings --cov=eventwhisper --cov-report=term-missing
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

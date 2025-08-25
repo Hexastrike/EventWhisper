@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: eventwhisper-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONIOENCODING: utf-8
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PIP_NO_PYTHON_VERSION_WARNING: "1"
+  TEST_EVTX: tests/data/test.evtx
+
+jobs:
+  tests:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify test data exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path '${{ env.TEST_EVTX }}')) {
+            throw "Missing EVTX test file at $env:TEST_EVTX. Commit your file (keep <100MB) under tests/data/."
+          }
+          Get-Item $env:TEST_EVTX | Format-List Name,Length,FullName
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry (via pipx)
+        run: pipx install poetry
+
+      # Optional: cache Poetry's download cache to speed up installs
+      - name: Cache Poetry cache dir
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\poetry-cache
+          key: poetry-cache-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Point Poetry to cached dir
+        shell: pwsh
+        run: |
+          $cache="${{ runner.temp }}\poetry-cache"
+          poetry config cache-dir "$cache"
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Show versions
+        shell: pwsh
+        run: |
+          poetry --version
+          poetry run python -V
+          poetry run pip list
+
+      - name: Run tests with coverage
+        # Coverage thresholds come from pyproject.toml ([tool.coverage.report].fail_under)
+        run: poetry run pytest --maxfail=1 --disable-warnings -q --cov=eventwhisper --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true

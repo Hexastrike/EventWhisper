@@ -1,0 +1,71 @@
+[tool.poetry]
+name = "eventwhisper"
+version = "0.1.0"
+description = "EventWhisper - MCP server for Windows Event Logs"
+authors = ["Maurice Fielenbach <info@hexastrike.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+packages = [{ include = "eventwhisper" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+fastmcp = ">=2.11.2,<3.0.0"
+evtx = ">=0.8.9,<0.9.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
+ruff = "^0.12.10"
+pre-commit = "^4.3.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# -------------------------
+# Pytest defaults (local)
+# -------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = """
+  --maxfail=1
+  --disable-warnings
+  --cov=eventwhisper
+  --cov-report=term-missing
+"""
+
+# -------------------------
+# Coverage configuration
+# -------------------------
+[tool.coverage.run]
+source = ["eventwhisper"]
+omit = [
+  "dev/*",
+  "tests/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+fail_under = 80
+
+# -------------------------
+# Ruff (lint + formatter)
+# -------------------------
+[tool.ruff]
+src = ["eventwhisper", "tests"]
+target-version = "py310"
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "FA", "ICN", "RET", "TID", "A", "COM"]
+extend-ignore = ["COM812", "E203", "E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["eventwhisper"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
