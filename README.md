@@ -1,5 +1,3 @@
-
-https://github.com/user-attachments/assets/159821fe-571a-4f8c-85a3-383f5360b84a
 # EventWhisper — A Windows Event Log MCP
 
 [![Tests](https://github.com/hexastrike/eventwhisper/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hexastrike/eventwhisper/actions/workflows/ci.yml)
